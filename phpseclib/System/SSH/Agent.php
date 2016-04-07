@@ -115,7 +115,9 @@ class Agent
     /**
      * Default Constructor
      *
-     * @throws BadConfigurationException
+     * @return \phpseclib\System\SSH\Agent
+     * @throws \phpseclib\Exception\BadConfigurationException if SSH_AUTH_SOCK cannot be found
+     * @throws \RuntimeException on connection errors
      * @access public
      */
     function __construct()
@@ -128,7 +130,7 @@ class Agent
                 $address = $_ENV['SSH_AUTH_SOCK'];
                 break;
             default:
-                throw new BadConfigurationException('SSH_AUTH_SOCK not found');
+                throw new \BadConfigurationException('SSH_AUTH_SOCK not found');
         }
 
         $this->fsock = fsockopen('unix://' . $address, 0, $errno, $errstr);
@@ -158,6 +160,7 @@ class Agent
             throw new \RuntimeException('Connection closed while requesting identities');
         }
 
+        $length = current(unpack('N', fread($this->fsock, 4)));
         $type = ord(fread($this->fsock, 1));
         if ($type != self::SSH_AGENT_IDENTITIES_ANSWER) {
             throw new \RuntimeException('Unable to request identities');
@@ -171,8 +174,6 @@ class Agent
             $length = current(unpack('N', fread($this->fsock, 4)));
             if ($length) {
                 $key_comment = fread($this->fsock, $length);
-            } else {
-                $key_comment = '';
             }
             $length = current(unpack('N', substr($key_blob, 0, 4)));
             $key_type = substr($key_blob, 4, $length);
