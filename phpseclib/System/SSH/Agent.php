@@ -174,6 +174,8 @@ class Agent
             $length = current(unpack('N', fread($this->fsock, 4)));
             if ($length) {
                 $key_comment = fread($this->fsock, $length);
+            } else {
+                $key_comment = '';
             }
             $length = current(unpack('N', substr($key_blob, 0, 4)));
             $key_type = substr($key_blob, 4, $length);
